@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dispatch Link</title>
+<meta name="description" content="Professional U.S. freight dispatch CRM and FMCSA lead processor. Contact: 03700684849">
+<script>document.documentElement.dataset.theme=localStorage.getItem('dl_theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="dl-locked">
+
+<!-- scraper-core.js uses the first h1/h2/.heading on the page: keep this h2 first -->
+<header class="app-bar">
+  <h2>Dispatch Link</h2>
+  <div class="app-actions">
+    <button class="nav-btn" id="openHistoryBtn" onclick="toggleHistoryDrawer()">📜 History</button>
+    <button class="nav-btn" id="openFollowUpDrawerBtn" onclick="toggleFollowUpDrawer()">📅 Follow-Ups</button>
+    <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Dark / Light mode">🌙</button>
+  </div>
+</header>
+
+<main class="container">
+  <div class="page-head">
+    <div class="page-title">Lead Processor</div>
+    <div class="page-sub">Scan FMCSA MC numbers, call carriers, track call status and manage follow-ups in one place.</div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><i class="c1">📋</i><div><small>Records Found</small><b id="kpiRecords">0</b></div></div>
+    <div class="kpi"><i class="c2">🎯</i><div><small>Scan Range</small><b id="kpiRange">Not set</b></div></div>
+    <div class="kpi kpi-progress"><i class="c3">⚡</i>
+      <div class="grow"><small>Scan Progress</small><b id="kpiProgress">Idle</b>
+        <div class="bar"><span id="kpiProgressBar"></span></div></div></div>
+    <div class="kpi"><i class="c4">📞</i><div><small>Calls This Shift</small><b id="kpiCalls">0</b></div></div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-title">MC Range Scanner</div>
+    <div class="input-group">
+      <div class="input-field"><label for="startMc">Starting MC Number</label><input type="number" id="startMc" value="0"></div>
+      <div class="input-field"><label for="endMc">Ending MC Number</label><input type="number" id="endMc" value="0"></div>
+    </div>
+    <div class="btn-container">
+      <button class="btn-start" id="startBtn" onclick="startScraping()">▶ Start Scanning</button>
+      <button class="btn-stop" id="stopBtn" onclick="stopScraping()" style="display:none">■ Stop</button>
+      <button class="btn-download" id="downloadBtn" onclick="downloadCSV()" style="display:none">⬇ Download Excel/CSV</button>
+    </div>
+    <div id="status" class="status idle">Enter an MC range and click Start Scanning.</div>
+  </section>
+
+  <!-- Filters -->
+  <section class="toolbar" id="advancedFilterWrapper">
+    <div class="search"><span>🔍</span><input type="text" id="universalSearchInput" placeholder="Search by MC, company name or phone…" oninput="applyAdvancedFilters()"></div>
+    <select id="stateDropdownSelect" onchange="applyAdvancedFilters()"><option value="">All States</option></select>
+    <div class="dd" id="categoryDropdownCheckList">
+      <button type="button" class="dd-btn anchor" onclick="toggleCategoryDropdown(event)">Categories ▾</button>
+      <ul class="dd-menu" id="checkboxListContainer"></ul>
+    </div>
+    <div class="dd" id="vehicleDropdown">
+      <button type="button" class="dd-btn" id="vehicleDropdownBtn" onclick="toggleVehicleDropdown(event)">Vehicle Types ▾</button>
+      <div class="dd-menu" id="vehicleTypeDropdownContent"><div id="vehicleCheckboxList"></div></div>
+    </div>
+    <button class="btn-ghost" onclick="resetAdvancedFilters()">Reset</button>
+    <div class="count-badge">Showing <b id="visibleRecordCountBadge">0</b> records</div>
+  </section>
+
+  <!-- Email proposal template -->
+  <section class="panel proposal" id="premiumProposalWrapper">
+    <div class="proposal-head" onclick="toggleProposalPanel()"><strong>✉️ Email Proposal Template</strong><span>Click to edit</span></div>
+    <div class="proposal-body" id="proposalInputsBlock">
+      <input type="text" id="propSubjectInput" placeholder="Subject">
+      <textarea id="propBodyInput" rows="5" placeholder="Message… use {company} for the carrier name"></textarea>
+      <div class="hint">Tip: <code>{company}</code> is replaced with the carrier name.</div>
+      <button class="btn-primary" onclick="saveProposalTemplateSettings()">Save Template</button>
+    </div>
+  </section>
+
+  <!-- Leads table -->
+  <section class="table-area">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>MC Number</th><th>USDOT</th><th>Company Name</th><th>Entity Type</th><th>Operating Status</th>
+            <th>Phone</th><th>Address</th><th>Email</th><th>Power Units</th>
+          </tr>
+        </thead>
+        <tbody id="resultsTable">
+          <tr><td colspan="9" class="empty">📭 No data loaded yet. Enter an MC range and click Start Scanning.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer class="app-foot">Developed by <b>Mr. Nauman</b> · Ph: 03700684849 · info@dispatchlink.online</footer>
+
+<!-- Drawers -->
+<div id="drawerScrim" onclick="closeDrawers()"></div>
+<aside class="drawer" id="dlHistoryDrawer">
+  <div class="drawer-head"><h3>📜 Saved Sheets History</h3><button class="x" onclick="closeDrawers()">&times;</button></div>
+  <div class="drawer-list" id="drawerHistoryList"></div>
+</aside>
+<aside class="drawer" id="dlFollowUpDrawer">
+  <div class="drawer-head"><h3>📅 Follow-Up Pipeline</h3><button class="x" onclick="closeDrawers()">&times;</button></div>
+  <div class="seg">
+    <button id="fubtnToday" class="active" onclick="filterFollowUpsByDate('today')">Today</button>
+    <button id="fubtnAll" onclick="filterFollowUpsByDate('all')">All</button>
+  </div>
+  <div class="drawer-search">
+    <input type="text" id="followUpSearchInput" placeholder="🔍 Search MC, name, phone…" oninput="renderFollowUpItems()">
+    <button class="btn-ghost" onclick="clearFollowUpFilters()" title="Clear filters">🔄</button>
+  </div>
+  <button class="btn-success block" onclick="downloadFollowUpsCSV()">📥 Download Follow-Ups Sheet</button>
+  <div class="bulk">
+    <label><input type="checkbox" id="selectAllFollowUpsCheckbox" onclick="toggleSelectAllFollowUps(this)"> Select all</label>
+    <button class="btn-primary" onclick="shareSelectedFollowUpsToTeam()">Share selected</button>
+  </div>
+  <div class="drawer-list" id="drawerFollowUpList"></div>
+</aside>
+
+<!-- Modals -->
+<div class="overlay" id="dlDatePickerModal">
+  <div class="modal-card">
+    <h3>⏰ Schedule Follow-Up</h3>
+    <label for="dlModalDateInput">Date</label><input type="date" id="dlModalDateInput">
+    <label for="dlModalTimeInput">Time</label><input type="time" id="dlModalTimeInput">
+    <div class="modal-actions"><button class="btn-ghost" onclick="closeFollowUpModal()">Cancel</button><button class="btn-success" onclick="confirmFollowUpSchedule()">Confirm Schedule</button></div>
+  </div>
+</div>
+<div class="overlay" id="dlTeamSelectModal">
+  <div class="modal-card">
+    <h3>👥 Share with Team Member</h3>
+    <p class="muted">Online or offline members will receive it in their inbox.</p>
+    <div id="dlTeamMembersRadioList" class="team-list"></div>
+    <div class="modal-actions"><button class="btn-ghost" onclick="closeTeamSelectModal()">Cancel</button><button class="btn-primary" onclick="confirmTeamShareAction()">Share Now</button></div>
+  </div>
+</div>
+<div class="overlay" id="dlDispositionModal">
+  <div class="modal-card">
+    <button class="x" onclick="document.getElementById('dlDispositionModal').style.display='none'">&times;</button>
+    <h3>What is the status of this call?</h3>
+    <p class="muted">Select call status for <b id="dispTargetPhoneNum"></b></p>
+    <div class="disp-grid" id="dispOptions"></div>
+  </div>
+</div>
+<div class="overlay" id="dlCallingDetailModal">
+  <div class="modal-card">
+    <button class="x" onclick="document.getElementById('dlCallingDetailModal').style.display='none'">&times;</button>
+    <h3>📞 Current Shift Details</h3>
+    <div id="dlCallingBody"></div>
+  </div>
+</div>
+
+<div id="toastStack"></div>
+<div id="dlFloatingNavPanel">
+  <button id="dlScrollUpBtn" onclick="scrollToTopScreen()" title="Scroll to top">⬆</button>
+  <button id="dlScrollDownBtn" onclick="scrollToLastCalledLead()" title="Jump to last called lead">⬇</button>
+</div>
+
+<script src="scraper-core.js"></script>
+<script>
+/* live KPI cards */
+(function () {
+  const t = document.getElementById('resultsTable'), rec = document.getElementById('kpiRecords'),
+        rng = document.getElementById('kpiRange'), a = document.getElementById('startMc'), b = document.getElementById('endMc');
+  const count = () => rec.textContent = [...t.rows].filter(r => r.cells.length > 2).length;
+  const range = () => rng.textContent = (+a.value || +b.value) ? `${a.value} – ${b.value}` : 'Not set';
+  new MutationObserver(count).observe(t, { childList: true });
+  a.addEventListener('input', range); b.addEventListener('input', range);
+  new MutationObserver(range).observe(a, { attributes: true }); range();
+})();
+</script>
+</body>
+</html>

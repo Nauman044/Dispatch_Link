@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dispatch Link | Admin Dashboard</title>
+<link rel="icon" type="image/png" href="https://cdn.jsdelivr.net/gh/mrartist048/fmcsa-control@main/favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<!-- Login -->
+<div id="authOverlay">
+  <div class="auth-card">
+    <div class="auth-logo">DL</div>
+    <div class="auth-title">Company Admin Portal</div>
+    <p>Enter your company name and master admin password to view your agents.</p>
+    <input type="text" id="adminCompanyInput" placeholder="Company name (e.g. dispatchloadify)">
+    <div class="pw"><input type="password" id="adminPasswordInput" placeholder="Master password" onkeydown="if(event.key==='Enter')verifyAdminPassword()">
+      <button type="button" id="togglePasswordBtn" onclick="togglePasswordVisibility()">👁️</button></div>
+    <button class="btn primary block" onclick="verifyAdminPassword()">Access Dashboard</button>
+    <div id="authErrorMsg">Invalid Company Name or Password!</div>
+  </div>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- Summary modal -->
+<div class="modal" id="summaryModal">
+  <div class="modal-box">
+    <h3>Shift Summary Report</h3>
+    <div id="modalSummaryBody"></div>
+    <div class="modal-actions">
+      <button class="btn primary" onclick="copySummaryText()">Copy Summary</button>
+      <button class="btn" onclick="closeSummaryModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar" id="appSidebar">
+    <div class="brand"><div class="brand-logo">DL</div><div><div class="brand-name" id="brandTitle">Dispatch Link</div><div class="brand-sub">USA Shift Control Panel</div></div></div>
+    <nav>
+      <div class="nav-label">Navigation</div>
+      <button id="tabOnline" class="nav-btn active" onclick="switchTab('online')">🟢 Online Users</button>
+      <button id="tabLeaderboard" class="nav-btn" onclick="switchTab('leaderboard')">🏆 Calling Leaderboard</button>
+      <button id="tabReports" class="nav-btn" onclick="switchTab('reports')">📊 Shift Reports &amp; Ratios</button>
+    </nav>
+    <div class="license">
+      <div class="license-title">License Status <span>🔒</span></div>
+      <div class="license-row"><span>Max allowed tabs</span><b id="sidebarMaxLimit">-</b></div>
+      <div class="license-row"><span>Active sessions</span><b id="sidebarActiveSessions">-</b></div>
+    </div>
+  </aside>
+
+  <section class="main">
+    <header class="topbar">
+      <div class="topbar-left"><button class="menu-toggle" onclick="toggleSidebar()">☰</button><div id="pageTitle">Online Users</div></div>
+      <div class="topbar-actions">
+        <button class="btn primary" onclick="openSummaryModal()">Shift Summary</button>
+        <button class="btn dark" onclick="renderContent()">🔄 Refresh</button>
+        <button class="btn success" id="exportBtn" onclick="exportCSV()" style="display:none">Export CSV</button>
+      </div>
+    </header>
+
+    <div id="filterBar" class="filterbar" style="display:none">
+      <div class="fgroup"><span>USA date filter</span>
+        <button id="presetToday" class="chip active" onclick="setDateFilterPreset('today')">Today (USA)</button>
+        <button id="presetWeek" class="chip" onclick="setDateFilterPreset('week')">Last 7 days</button></div>
+      <div class="fgroup"><span>Custom range</span><input type="text" id="unifiedDateRangePicker" placeholder="Select date or range..."></div>
+    </div>
+
+    <div class="body" id="adminBodyContent">Sign in to load statistics…</div>
+  </section>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="admin.js"></script>
+</body>
+</html>
